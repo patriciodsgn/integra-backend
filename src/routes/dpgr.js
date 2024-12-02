@@ -262,5 +262,131 @@ router.get('/totalJardinesSelloVerde', async (req, res) => {
         return handleError(res, error);
     }
 });
+// Endpoint para obtener frecuencia de pueblos originarios
+router.get('/frecuenciaPueblosOriginarios', validateParams, async (req, res) => {
+    try {
+        console.log('Recibiendo petición de frecuencia pueblos originarios:', req.query);
+        const { codigoRegion, codigoJardin, ano } = req.query;
 
+        const params = {
+            codigoRegion: parseInt(codigoRegion) || 0,
+            codigoJardin: parseInt(codigoJardin) || 0,
+            ano: parseInt(ano) || 0
+        };
+
+        const request = new sql.Request();
+        const result = await request
+            .input('CodigoRegion', sql.Int, params.codigoRegion)
+            .input('CodigoJardin', sql.Int, params.codigoJardin)
+            .input('Ano', sql.Int, params.ano)
+            .execute('sp_ObtenerFrecuenciaPueblosOriginarios');
+
+        if (!result.recordset || result.recordset.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: MESSAGES.NO_DATA
+            });
+        }
+
+        const data = result.recordset.map(item => ({
+            region: item.Region,
+            nombreRegion: item.NombreRegion,
+            provincia: item.Provincia,
+            comuna: item.Comuna,
+            frecuencia: item.Frecuencia
+        }));
+
+        const totalFrecuencia = data.reduce((acc, curr) => acc + curr.frecuencia, 0);
+
+        return res.json({
+            success: true,
+            data: data,
+            count: data.length,
+            summary: {
+                totalFrecuencia: totalFrecuencia
+            },
+            params: params
+        });
+
+    } catch (error) {
+        return handleError(res, error);
+    }
+});
+
+router.get('/estadisticasRO', validateParams, async (req, res) => {
+    try {
+        console.log('Recibiendo petición de estadísticas RO:', req.query);
+        const { anoRO, codigoRegion, codigoJardin } = req.query;
+
+        if (!anoRO) {
+            return res.status(400).json({
+                success: false,
+                message: MESSAGES.REQUIRED_YEAR
+            });
+        }
+
+        const params = {
+            anoRO: parseInt(anoRO),
+            codigoRegion: parseInt(codigoRegion) || 0,
+            codigoJardin: parseInt(codigoJardin) || 0
+        };
+
+        const request = new sql.Request();
+        const result = await request
+            .input('AnoRO', sql.Int, params.anoRO)
+            .input('CodigoRegion', sql.Int, params.codigoRegion)
+            .input('CodigoJardin', sql.Int, params.codigoJardin)
+            .execute('sp_ObtenerEstadisticasRO');
+
+        if (!result.recordset || result.recordset.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: MESSAGES.NO_DATA
+            });
+        }
+
+        // Procesamos los datos para obtener las estadísticas agregadas
+        const estadisticasPorTipo = {};
+        result.recordset.forEach(item => {
+            if (!estadisticasPorTipo[item.TipoEstablecimiento]) {
+                estadisticasPorTipo[item.TipoEstablecimiento] = {
+                    totalJardines: 0,
+                    conReconocimiento: 0
+                };
+            }
+            estadisticasPorTipo[item.TipoEstablecimiento].totalJardines += item.TotalJardines;
+            estadisticasPorTipo[item.TipoEstablecimiento].conReconocimiento += item.ConReconocimiento;
+        });
+
+        const estadisticasFormateadas = Object.entries(estadisticasPorTipo).map(([tipo, stats]) => ({
+            tipoEstablecimiento: tipo,
+            totalJardines: stats.totalJardines,
+            conReconocimiento: stats.conReconocimiento,
+            porcentaje: Math.round((stats.conReconocimiento / stats.totalJardines) * 100)
+        }));
+
+        return res.json({
+            success: true,
+            data: {
+                estadisticas: estadisticasFormateadas,
+                detalleJardines: result.recordset.map(item => ({
+                    region: item.NombreRegion,
+                    codigoJardin: item.CodigoJardin,
+                    nombreJardin: item.NombreJardin,
+                    tipoEstablecimiento: item.TipoEstablecimiento,
+                    comuna: item.Comuna,
+                    provincia: item.Provincia,
+                    estadoRO: item.EstadoRO,
+                    fechaRO: item.FechaRO,
+                    tienePlacaROIntegra: item.TienePlacaROIntegra,
+                    tienePlacaSdEP: item.TienePlacaSdEP
+                }))
+            },
+            params
+        });
+
+    } catch (error) {
+        return handleError(res, error);
+    }
+});
 module.exports = router;
