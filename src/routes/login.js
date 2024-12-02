@@ -118,31 +118,59 @@ router.post('/usuario', async (req, res) => {
 
         if (!result.recordset || result.recordset.length === 0) {
             return res.status(404).json({
-                success: false, 
+                success: false,
                 message: 'No se encontraron datos para el correo proporcionado.'
             });
         }
 
-        // Procesar el resultado para devolver una estructura más detallada
+        // Procesar permisos separándolos por tipo (DIRECCION y REGION)
+        const permisos = result.recordset.reduce((acc, record) => {
+            if (record.TipoCategoria && record.ValorCategoria) {
+                const permiso = {
+                    CodigoPermiso: record.ValorCategoria.trim(),
+                    NombrePermiso: record.NombrePermiso,
+                    TipoCategoria: record.TipoCategoria,
+                    ValorCategoria: record.ValorCategoria.trim()
+                };
+
+                // Prevenir duplicados
+                const existePermiso = acc.some(p => 
+                    p.CodigoPermiso === permiso.CodigoPermiso && 
+                    p.TipoCategoria === permiso.TipoCategoria
+                );
+
+                if (!existePermiso) {
+                    acc.push(permiso);
+                }
+            }
+            return acc;
+        }, []);
+
+        // Encontrar la región asignada al usuario
+        const regionAsignada = result.recordset.find(record => 
+            record.TipoCategoria === 'REGION' && 
+            record.CodigoRegion && 
+            record.NombreRegion
+        );
+
+        // Construir el objeto de usuario
         const usuario = {
             datosUsuario: {
                 CodigoUsuario: result.recordset[0].CodigoUsuario,
                 Nombre: result.recordset[0].Nombre,
                 CorreoElectronico: result.recordset[0].CorreoElectronico,
                 CodigoRol: result.recordset[0].CodigoRol,
-                // Agrega aquí otros campos relevantes de la tabla tbUsuario
+                nivelAcceso: result.recordset[0].nivelAcceso,
+                Rut: result.recordset[0].Rut  // Agregado el campo Rut
             },
-            permisos: result.recordset.map(record => ({
-                CodigoPermiso: record.CodigoPermiso || null,
-                NombrePermiso: record.NombrePermiso || null,
-                TipoCategoria: record.TipoCategoria || null,
-                ValorCategoria: record.ValorCategoria || null
-            })),
+            permisos: permisos,
             region: {
-                CodigoRegion: result.recordset[0].CodigoRegion || null,
-                NombreRegion: result.recordset[0].NombreRegion || null
+                CodigoRegion: regionAsignada?.CodigoRegion || null,
+                NombreRegion: regionAsignada?.NombreRegion || null
             }
         };
+
+        console.log('Usuario procesado:', JSON.stringify(usuario, null, 2));
 
         res.json({
             success: true,
@@ -150,6 +178,7 @@ router.post('/usuario', async (req, res) => {
         });
 
     } catch (error) {
+        console.error('Error completo:', error);
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor',
