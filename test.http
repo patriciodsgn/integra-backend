@@ -1,0 +1,32 @@
+### Obtener lista de regiones
+GET http://localhost:3000/api/regiones
+Content-Type: application/json
+
+###
+
+### Obtener datos educativos
+GET http://localhost:3000/api/educacion
+Content-Type: application/json
+
+###
+
+### Autenticación de usuario
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "usuarioPrueba",
+  "password": "password123"
+}
+
+###
+
+### Obtener datos presupuestarios
+GET http://localhost:3000/api/presupuesto
+Content-Type: application/json
+
+###
+
+### Obtener parámetros de configuración
+GET http://localhost:3000/api/parametros
+Content-Type: application/json
