@@ -1,0 +1,47 @@
+# Dependencias
+node_modules/
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de compilación y distribución
+dist/
+build/
+
+# Archivos temporales
+*.tmp
+*.temp
+*.pid
+*.seed
+*.pid.lock
+
+# Cobertura de pruebas
+coverage/
+
+# Archivos de configuración de IDEs/editores
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de bloqueo (opcional, si estás compartiendo lockfiles puedes eliminar esta sección)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Archivos de configuración personal
+*.iml
+*.swp
