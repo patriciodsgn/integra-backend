@@ -1,9 +1,13 @@
 
 # BACKEND
 
-full working!
+the backend is working...
 
 
-`npm install`
+````
 
-`node src/app3.js`
+npm install
+
+node src/app3.js
+
+```
