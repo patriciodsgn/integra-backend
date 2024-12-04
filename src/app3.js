@@ -107,6 +107,8 @@ const presupuestoRoutes = require('./routes/presupuesto');
 const regionesRoutes = require('./routes/regiones');
 const parametrosRoutes = require('./routes/parametros');
 const loginRoutes = require('./routes/login');
+const dppiRoutes= require('./routes/dppi');
+const dpgrRoutes= require('./routes/dpgr');
 
 // Registrar rutas
 app.use('/api/educacion', educacionRoutes);
@@ -114,6 +116,8 @@ app.use('/api/presupuesto', presupuestoRoutes);
 app.use('/api/regiones', regionesRoutes);
 app.use('/api/parametros', parametrosRoutes);
 app.use('/api/login', loginRoutes);
+app.use('/api/dppi', dppiRoutes);
+app.use('/api/dpgr', dpgrRoutes);
 
 // Middleware para rutas no encontradas
 app.use((req, res) => {
@@ -150,6 +154,8 @@ async function startServer() {
             console.log('- GET /api/regiones');
             console.log('- GET /api/parametros');
             console.log('- POST /api/login');
+            console.log('- get /api/dppi');
+            console.log('- get /api/dppr');
         });
     } catch (err) {
         console.error('Error fatal al iniciar el servidor:', err.message);

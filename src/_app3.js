@@ -61,7 +61,42 @@ async function connectToDatabase() {
         await sql.connect(config);
         console.log('Conexión exitosa a SQL Server');
     } catch (err) {
-        console.error('Error al conectar a SQL Server:', err.message);
+        if (err.code === 'ELOGIN' && err.originalError && err.originalError.message.includes('Token is expired')) {
+            console.error('Token expirado, intentando renovar y reconectar...');
+            await handleTokenExpiration();
+        } else {
+            console.error('Error al conectar a SQL Server:', err.message);
+            throw err;
+        }
+    }
+}
+
+// Manejar la expiración del token y volver a intentar la conexión
+async function handleTokenExpiration() {
+    try {
+        const token = await getAccessToken();
+
+        const config = {
+            server: process.env.SQL_SERVER,
+            database: process.env.SQL_DATABASE,
+            authentication: {
+                type: 'azure-active-directory-access-token',
+                options: {
+                    token: token
+                }
+            },
+            options: {
+                encrypt: true,
+                trustServerCertificate: false,
+                connectTimeout: 30000
+            }
+        };
+
+        console.log('Intentando reconectar a la base de datos con un nuevo token...');
+        await sql.connect(config);
+        console.log('Reconexión exitosa a SQL Server');
+    } catch (err) {
+        console.error('Error al reconectar a SQL Server después de la renovación del token:', err.message);
         throw err;
     }
 }
