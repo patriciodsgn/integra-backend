@@ -316,24 +316,20 @@ router.get('/frecuenciaPueblosOriginarios', validateParams, async (req, res) => 
 router.get('/estadisticasRO', validateParams, async (req, res) => {
     try {
         console.log('Recibiendo petición de estadísticas RO:', req.query);
-        const { ano, codigoRegion, codigoJardin } = req.query;
+        const { anoRO, codigoRegion, codigoJardin } = req.query;
 
-        // Validar la presencia del año después del middleware
-        if (!ano) {
-            console.log('Año no proporcionado en la petición');
+        if (!anoRO) {
             return res.status(400).json({
                 success: false,
-                message: "El año es requerido"
+                message: MESSAGES.REQUIRED_YEAR
             });
         }
 
         const params = {
-            anoRO: parseInt(ano),
+            anoRO: parseInt(anoRO),
             codigoRegion: parseInt(codigoRegion) || 0,
             codigoJardin: parseInt(codigoJardin) || 0
         };
-
-        console.log('Parámetros procesados:', params);
 
         const request = new sql.Request();
         const result = await request
@@ -345,11 +341,11 @@ router.get('/estadisticasRO', validateParams, async (req, res) => {
         if (!result.recordset || result.recordset.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: "No se encontraron datos para los parámetros proporcionados"
+                message: MESSAGES.NO_DATA
             });
         }
 
-        // Procesamiento de estadísticas igual que antes...
+        // Procesamos los datos para obtener las estadísticas agregadas
         const estadisticasPorTipo = {};
         result.recordset.forEach(item => {
             if (!estadisticasPorTipo[item.TipoEstablecimiento]) {
@@ -390,16 +386,9 @@ router.get('/estadisticasRO', validateParams, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en estadísticasRO:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Error interno del servidor',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        return handleError(res, error);
     }
 });
-
-module.exports = router;
 router.get('/graficoSelloVerde', validateParams, async (req, res) => {
     try {
         console.log('Recibiendo petición de gráfico sello verde:', req.query);
