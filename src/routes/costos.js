@@ -77,5 +77,48 @@ router.get('/evolucionCostos', async (req, res) => {
         });
     }
 });
+// Endpoint para obtener el comparativo CMM Regional
+router.get('/comparativoCMM', async (req, res) => {
+    try {
+        // Registrar la solicitud para debugging
+        console.log('Procesando solicitud para obtener comparativo CMM Regional');
 
+        // Crear una nueva solicitud usando la conexión existente del pool
+        const request = new sql.Request();
+
+        // Ejecutar el stored procedure
+        const result = await request.execute('sp_ComparativoCMMRegional');
+
+        // Verificar si tenemos resultados
+        if (result.recordset && result.recordset.length > 0) {
+            console.log(`Datos recuperados exitosamente: ${result.recordset.length} registros`);
+            res.json({
+                success: true,
+                data: result.recordset
+            });
+        } else {
+            console.log('No se encontraron datos');
+            res.json({
+                success: true,
+                data: [],
+                message: 'No se encontraron datos'
+            });
+        }
+
+    } catch (error) {
+        // Logging detallado del error para debugging
+        console.error('Error en /comparativoCMM:', {
+            message: error.message,
+            stack: error.stack,
+            originalError: error.originalError
+        });
+
+        // Enviar respuesta de error al cliente
+        res.status(500).json({
+            success: false,
+            error: 'Error al obtener el comparativo CMM',
+            message: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor'
+        });
+    }
+});
 module.exports = router;
