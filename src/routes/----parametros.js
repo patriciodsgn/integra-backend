@@ -59,11 +59,8 @@ router.post('/obtenerDirecciones', validateOptionalParams, async (req, res) => {
         console.log('Recibiendo petición para obtener direcciones:', req.body);
         const { CodigoDireccion, TipoDireccion } = req.body;
 
-        // Crear nueva instancia de Request
-        const request = new sql.Request();
-
         // Ejecutar el procedimiento almacenado
-        const result = await request
+        const result = await sql.request()
             .input('CodigoDireccion', sql.Int, CodigoDireccion || null)
             .input('TipoDireccion', sql.NVarChar(50), TipoDireccion || null)
             .execute('sp_ObtenerDirecciones');
@@ -94,11 +91,8 @@ router.post('/obtenerSubRubros', validateRubro, async (req, res) => {
         console.log('Recibiendo petición para obtener subrubros:', req.body);
         const { Rubro } = req.body;
 
-        // Crear nueva instancia de Request
-        const request = new sql.Request();
-
         // Ejecutar el procedimiento almacenado
-        const result = await request
+        const result = await sql.request()
             .input('Rubro', sql.NVarChar(30), Rubro)
             .execute('sp_ObtenerSubRubros');
 
@@ -126,19 +120,9 @@ router.post('/obtenerSubRubros', validateRubro, async (req, res) => {
 router.get('/obtenerTodosLosRubros', async (req, res) => {
     try {
         console.log('Recibiendo petición para obtener todos los rubros y subrubros.');
-        // Crear nueva instancia de Request
-        const request = new sql.Request();
-        // Ejecutar el procedimiento almacenad
-        
-        
+
         // Ejecutar el procedimiento almacenado
-        //const result = await request
-        //    .input('CodigoDireccion', sql.Int, CodigoDireccion || null)
-        //    .input('TipoDireccion', sql.NVarChar(50), TipoDireccion || null)
-        //    .execute('sp_ObtenerDirecciones');
-        
-        
-            const result = await await request
+        const result = await sql.request()
             .execute('sp_ObtenerTodosLosRubros');
 
         // Validar si hay resultados
