@@ -218,38 +218,46 @@ router.post('/obtenerPresupuestoComprometidoVsEjecutado', validateParams, async 
 
 
 // Endpoint para ejecutar sp_ObtenerPresupuestoVsEjecutado
-router.post('/obtenerPresupuestoVsEjecutado', validateParams, async (req, res) => {
+router.get('/obtenerPresupuestoVsEjecutado', async (req, res) => {
     try {
-        console.log('Recibiendo petición:', req.body);
-        const { Ano, NombreDireccion, Rubro, SubRubro } = req.body;
-
+        console.log('Recibiendo petición:', req.query);
+        const { ano, NombreDireccion, Rubro, SubRubro } = req.query;
+ 
+        // Validar parámetro obligatorio
+        if (!ano) {
+            return res.status(400).json({
+                success: false,
+                message: MESSAGES.MISSING_PARAM
+            });
+        }
+ 
         // Usar la instancia de sql directamente ya que la conexión está manejada por Azure AD
         const request = new sql.Request();
         const result = await request
-            .input('Ano', sql.Int, Ano)
+            .input('ano', sql.Int, parseInt(ano))
             .input('NombreDireccion', sql.NVarChar(50), NombreDireccion || null)
             .input('Rubro', sql.NVarChar(30), Rubro || null)
             .input('SubRubro', sql.NVarChar(30), SubRubro || null)
             .execute('sp_ObtenerPresupuestoVsEjecutado');
-
+ 
         if (!result.recordset || result.recordset.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: MESSAGES.NO_DATA
             });
         }
-
+ 
         return res.json({
             success: true,
             data: result.recordset,
             count: result.recordset.length
         });
-
+ 
     } catch (error) {
         // Si el error es de token expirado, se manejará en el middleware global
         return handleError(res, error);
     }
-});
+ });
 // Endpoint para ejecutar sp_ObtenerPresupuestoVsGastos
 router.post('/obtenerPresupuestoVsGastos', validateParams, async (req, res) => {
     try {

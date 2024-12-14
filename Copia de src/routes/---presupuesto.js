@@ -37,18 +37,12 @@ router.post('/obtenerDatosTarjetas', validateParams, async (req, res) => {
         console.log('Recibiendo petición:', req.body);
         const { Ano, NombreDireccion, Rubro, SubRubro, CodigoCentroGestor } = req.body;
 
-        // Crear nueva instancia de Request
-        const request = new sql.Request();
-        
-        // Asegurarnos de que CodigoCentroGestor tenga un valor por defecto si es null
-        const defaultCentroGestor = CodigoCentroGestor || '';  // o algún otro valor por defecto válido
-        
-        const result = await request
+        const result = await sql.request()
             .input('Ano', sql.Int, Ano)
             .input('NombreDireccion', sql.NVarChar(50), NombreDireccion || null)
             .input('Rubro', sql.NVarChar(30), Rubro || null)
             .input('SubRubro', sql.NVarChar(30), SubRubro || null)
-            .input('CodigoCentroGestor', sql.NVarChar(20), defaultCentroGestor)
+            .input('CodigoCentroGestor', sql.NVarChar(20), CodigoCentroGestor)
             .execute('sp_ObtenerDatosTarjetasConCentroGestor');
 
         if (!result.recordset || result.recordset.length === 0) {
@@ -75,9 +69,7 @@ router.post('/obtenerFlujoSaldo', validateParams, async (req, res) => {
         console.log('Recibiendo petición:', req.body);
         const { Ano, NombreDireccion, Rubro, SubRubro } = req.body;
 
-        // Crear un nuevo request usando el constructor
-        const request = new sql.Request();
-        const result = await request
+        const result = await sql.request()
             .input('Ano', sql.Int, Ano)
             .input('NombreDireccion', sql.NVarChar(50), NombreDireccion || null)
             .input('Rubro', sql.NVarChar(30), Rubro || null)
@@ -178,7 +170,7 @@ router.post('/obtenerPorcentajeEjecucionVsSaldo', validateParams, async (req, re
     }
 });
 // Endpoint para ejecutar sp_ObtenerPresupuestoComprometidoVsEjecutado
-router.post('/obtenerPresupuestoComprometidoVsEjecutado', validateParams, async (req, res) => {
+router.post('/api/presupuesto/obtenerPresupuestoComprometidoVsEjecutado', validateParams, async (req, res) => {
     try {
         const { Ano, NombreDireccion, Rubro, SubRubro } = req.body;
 
@@ -216,16 +208,13 @@ router.post('/obtenerPresupuestoComprometidoVsEjecutado', validateParams, async 
     }
 });
 
-
 // Endpoint para ejecutar sp_ObtenerPresupuestoVsEjecutado
 router.post('/obtenerPresupuestoVsEjecutado', validateParams, async (req, res) => {
     try {
         console.log('Recibiendo petición:', req.body);
         const { Ano, NombreDireccion, Rubro, SubRubro } = req.body;
 
-        // Usar la instancia de sql directamente ya que la conexión está manejada por Azure AD
-        const request = new sql.Request();
-        const result = await request
+        const result = await sql.request()
             .input('Ano', sql.Int, Ano)
             .input('NombreDireccion', sql.NVarChar(50), NombreDireccion || null)
             .input('Rubro', sql.NVarChar(30), Rubro || null)
@@ -246,7 +235,6 @@ router.post('/obtenerPresupuestoVsEjecutado', validateParams, async (req, res) =
         });
 
     } catch (error) {
-        // Si el error es de token expirado, se manejará en el middleware global
         return handleError(res, error);
     }
 });
@@ -315,29 +303,26 @@ router.post('/presupuestoVigenteVsEjecutado', validateParams, async (req, res) =
 router.get('/obtenerAniosEjecucion', async (req, res) => {
     try {
         console.log('Recibiendo petición para obtener años de ejecución presupuestaria.');
- 
-        // Crear nueva instancia de Request 
-        const request = new sql.Request();
- 
-        const result = await request
+
+        const result = await sql.request()
             .execute('sp_ObtenerAniosEjecucionPresupuestaria');
- 
+
         if (!result.recordset || result.recordset.length === 0) {
             return res.status(404).json({
-                success: false, 
+                success: false,
                 message: MESSAGES.NO_DATA
             });
         }
- 
+
         return res.json({
             success: true,
             data: result.recordset,
             count: result.recordset.length
         });
- 
+
     } catch (error) {
         return handleError(res, error);
     }
- });
+});
 
 module.exports = router;
