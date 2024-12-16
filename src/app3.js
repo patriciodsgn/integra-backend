@@ -145,6 +145,10 @@ const dpgrRoutes = require('./routes/dpgr');
 const costosRoutes = require('./routes/costos');
 const personaRoutes = require('./routes/persona');
 
+const helloWorld = (req, res, next) => {
+    res.send('¡Hola Mundo!');
+    next(); // Esto es opcional si no tienes otros middlewares o rutas
+};
 
 // Registrar rutas
 app.use('/api/educacion', educacionRoutes);
@@ -156,7 +160,7 @@ app.use('/api/dppi', dppiRoutes);
 app.use('/api/dpgr', dpgrRoutes);
 app.use('/api/costos', costosRoutes);
 app.use('/api/persona', personaRoutes);
-
+app.use('/', helloWorld);
 
 // Middleware para rutas no encontradas
 app.use((req, res) => {
