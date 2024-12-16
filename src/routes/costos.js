@@ -7,39 +7,49 @@ const sql = require('mssql');
 router.get('/evolucionCostos', async (req, res) => {
     try {
         // Registrar la solicitud para debugging
-        console.log(`Procesando solicitud de evolución de costos para año: ${req.query.ano || 2023}`);
-
-        // Obtener el año del query parameter, default a 2023 si no se proporciona
-        const ano = req.query.ano || 2023;
+        console.log('🔄 Procesando solicitud de evolución de costos');
+        console.log('Query params:', req.query);
 
         // Crear una nueva solicitud usando la conexión existente del pool
         const request = new sql.Request();
         
-        // Configurar el parámetro para el stored procedure
-        request.input('Ano', sql.Int, ano);
+        // Si se proporciona un año, lo pasamos al SP, si no, el SP usará el más reciente
+        if (req.query.ano) {
+            request.input('Ano', sql.Int, parseInt(req.query.ano));
+            console.log(`📅 Año solicitado: ${req.query.ano}`);
+        } else {
+            console.log('📅 No se especificó año, SP usará el más reciente');
+        }
         
         // Ejecutar el stored procedure
         const result = await request.execute('sp_ObtenerEvolucionCostos');
         
         // Verificar si tenemos resultados
         if (result.recordset && result.recordset.length > 0) {
-            console.log(`Datos recuperados exitosamente: ${result.recordset.length} registros`);
+            const years = [...new Set(result.recordset.map(r => r.Ano))];
+            console.log(`✅ Datos recuperados exitosamente:`, {
+                totalRegistros: result.recordset.length,
+                años: years,
+                primerRegistro: result.recordset[0]
+            });
+
             res.json({
                 success: true,
-                data: result.recordset
+                data: result.recordset,
+                years: years
             });
         } else {
-            console.log('No se encontraron datos para el año especificado');
+            console.log('⚠️ No se encontraron datos');
             res.json({
                 success: true,
                 data: [],
-                message: 'No se encontraron datos para el año especificado'
+                message: 'No se encontraron datos para los años solicitados'
             });
         }
         
     } catch (error) {
         // Logging detallado del error para debugging
-        console.error('Error en /evolucionCostos:', {
+        console.error('❌ Error en /evolucionCostos:', {
             message: error.message,
             stack: error.stack,
             originalError: error.originalError
@@ -48,20 +58,25 @@ router.get('/evolucionCostos', async (req, res) => {
         // Si es un error de token expirado, intentamos reconectar
         if (error.code === 'ELOGIN' && error.originalError?.message.includes('Token is expired')) {
             try {
+                console.log('🔄 Reintentando conexión después de error de token...');
                 // Esperar a que la conexión principal se renueve
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Reintentar la consulta
                 const request = new sql.Request();
-                request.input('Ano', sql.Int, req.query.ano || 2023);
+                if (req.query.ano) {
+                    request.input('Ano', sql.Int, parseInt(req.query.ano));
+                }
                 const result = await request.execute('sp_ObtenerEvolucionCostos');
                 
+                console.log('✅ Reintento exitoso');
                 return res.json({
                     success: true,
-                    data: result.recordset
+                    data: result.recordset,
+                    years: [...new Set(result.recordset.map(r => r.Ano))]
                 });
             } catch (retryError) {
-                console.error('Error en el reintento:', retryError);
+                console.error('❌ Error en el reintento:', retryError);
                 return res.status(500).json({
                     success: false,
                     error: 'Error al obtener los datos después del reintento'
